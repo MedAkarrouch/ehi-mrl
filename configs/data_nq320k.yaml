@@ -1,0 +1,6 @@
+dataset_name: nq320k
+source: huggingface
+hf_dataset: dqmis/NQ320K-NCI
+task: train_and_eval
+output_dir: data/processed/nq320k
+cache_dir: .cache/huggingface

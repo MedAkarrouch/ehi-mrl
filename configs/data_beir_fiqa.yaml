@@ -1,0 +1,7 @@
+dataset_name: beir_fiqa
+source: huggingface
+hf_dataset: BeIR/fiqa
+hf_qrels: BeIR/fiqa-qrels
+task: ood_eval
+output_dir: data/processed/beir_fiqa
+cache_dir: .cache/huggingface

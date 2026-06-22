@@ -1,0 +1,7 @@
+dataset_name: beir_scifact
+source: huggingface
+hf_dataset: BeIR/scifact
+hf_qrels: BeIR/scifact-qrels
+task: ood_eval
+output_dir: data/processed/beir_scifact
+cache_dir: .cache/huggingface

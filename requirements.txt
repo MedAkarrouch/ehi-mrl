@@ -1,0 +1,14 @@
+transformers
+sentence-transformers
+datasets
+huggingface-hub
+beir
+ir-datasets
+faiss-cpu
+numpy
+pandas
+scikit-learn
+tqdm
+pyyaml
+pytrec_eval
+pytest
