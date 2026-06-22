@@ -1,10 +1,16 @@
 #!/usr/bin/env bash
 #SBATCH --job-name=ehi_mrl_inspect_data
+#SBATCH --account=big_data_psaclay
+
 #SBATCH --output=logs/%x_%j.out
 #SBATCH --error=logs/%x_%j.err
-#SBATCH --time=00:15:00
-##SBATCH --partition=<partition>
-##SBATCH --account=<account>
+
+
+#SBATCH --partition=fast
+
+#SBATCH --time=00:30:00
+#SBATCH --cpus-per-task=16
+#SBATCH --mem=64G
 
 set -euo pipefail
 cd /shared/projects/big_data_psaclay/students_M2/melmoussaoui/ehi-mrl
