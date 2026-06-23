@@ -5,3 +5,4 @@ hf_qrels: BeIR/scifact-qrels
 task: ood_eval
 output_dir: data/processed/beir_scifact
 cache_dir: .cache/huggingface
+random_seed: 42

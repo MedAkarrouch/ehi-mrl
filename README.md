@@ -1,6 +1,6 @@
 # EHI-MRL: End-to-End Hierarchical Indexing with Matryoshka Representations
 
-EHI-MRL is a research project exploring efficient dense retrieval through end-to-end hierarchical indexing and Matryoshka Representation Learning. This repository currently contains only the Phase 0 project skeleton, dataset configuration scaffolding, HPC job templates, and validation scripts.
+EHI-MRL is a research project exploring efficient dense retrieval through end-to-end hierarchical indexing and Matryoshka Representation Learning. Phase 1 provides unified data normalization and validation; model training, indexing, embeddings, and retrieval evaluation are intentionally deferred.
 
 ## Planned workflow
 
@@ -22,6 +22,37 @@ EHI-MRL is a research project exploring efficient dense retrieval through end-to
 - **BEIR FiQA**: out-of-distribution evaluation
 
 Datasets are loaded from the Hugging Face Hub only when the data scripts run. They are cached locally or on HPC and are not stored in Git.
+
+## Phase 1: normalized retrieval data
+
+Processed files are written under `data/processed/{dataset_name}/` using BEIR-compatible conventions:
+
+```text
+corpus.jsonl
+queries_train.jsonl | queries_dev.jsonl | queries_test.jsonl
+qrels_train.tsv | qrels_dev.tsv | qrels_test.tsv
+triples_train.tsv
+dataset_info.json
+```
+
+Corpus rows use `{"_id": "doc-id", "title": "", "text": "document text"}` and query rows use `{"_id": "query-id", "text": "query text"}`. Qrels and training triples are tab-separated files with explicit headers.
+
+NQ320K is normalized for training and in-domain evaluation, including one deterministic sampled negative per training query. SciFact and FiQA are normalized for out-of-distribution evaluation only, without default training triples. Source datasets are cached from Hugging Face and their normalized outputs remain ignored by Git.
+
+Run the offline, Codex-safe tests (they do not download datasets):
+
+```bash
+bash testing/run_codex_tests.sh
+```
+
+On HPC, Phase 1 data jobs are CPU-only and use the `fast` partition:
+
+```bash
+sbatch jobs/prepare_data_nq320k.sbatch
+sbatch jobs/prepare_data_scifact.sbatch
+sbatch jobs/prepare_data_fiqa.sbatch
+sbatch jobs/validate_all_processed_data.sbatch
+```
 
 ## HPC environment
 

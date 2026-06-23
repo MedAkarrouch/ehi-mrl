@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Offline syntax validation for Phase 0 scripts."""
+"""Offline syntax validation for Phase 0 and Phase 1 scripts."""
 
 import py_compile
 from pathlib import Path
@@ -7,8 +7,10 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 FILES = (
+    "scripts/data_utils.py",
     "scripts/prepare_data.py",
     "scripts/inspect_dataset.py",
+    "scripts/validate_processed_data.py",
     "scripts/install_project_deps.sh",
 )
 
@@ -18,7 +20,7 @@ def main() -> None:
         path = ROOT / relative_path
         assert path.is_file(), f"Missing required script: {path}"
 
-    for relative_path in FILES[:2]:
+    for relative_path in (path for path in FILES if path.endswith(".py")):
         py_compile.compile(str(ROOT / relative_path), doraise=True)
     print("Script existence and Python compilation checks passed.")
 

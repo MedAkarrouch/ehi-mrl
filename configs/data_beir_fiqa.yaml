@@ -5,3 +5,4 @@ hf_qrels: BeIR/fiqa-qrels
 task: ood_eval
 output_dir: data/processed/beir_fiqa
 cache_dir: .cache/huggingface
+random_seed: 42

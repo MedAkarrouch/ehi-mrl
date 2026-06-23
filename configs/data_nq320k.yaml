@@ -1,6 +1,12 @@
 dataset_name: nq320k
 source: huggingface
 hf_dataset: dqmis/NQ320K-NCI
+hf_corpus_config: corpus
+hf_pairs_config: pairs
+hf_corpus_split: corpus
+hf_train_split: train
+hf_dev_split: validation
 task: train_and_eval
 output_dir: data/processed/nq320k
 cache_dir: .cache/huggingface
+random_seed: 42
