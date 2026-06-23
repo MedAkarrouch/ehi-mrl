@@ -37,7 +37,7 @@ dataset_info.json
 
 Corpus rows use `{"_id": "doc-id", "title": "", "text": "document text"}` and query rows use `{"_id": "query-id", "text": "query text"}`. Qrels and training triples are tab-separated files with explicit headers.
 
-NQ320K is normalized for training and in-domain evaluation, including one deterministic sampled negative per training query. SciFact and FiQA are normalized for out-of-distribution evaluation only, without default training triples. Source datasets are cached from Hugging Face and their normalized outputs remain ignored by Git.
+NQ320K is normalized for training and in-domain evaluation, including one deterministic sampled negative per training query. SciFact and FiQA are normalized for out-of-distribution evaluation only, without default training triples; their Hugging Face sources use separate `corpus` and `queries` configs. Source datasets are cached from Hugging Face and their normalized outputs remain ignored by Git.
 
 Run the offline, Codex-safe tests (they do not download datasets):
 

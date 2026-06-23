@@ -35,39 +35,12 @@ def load_dataset(*args: Any, **kwargs: Any) -> Any:
     return hf_load_dataset(*args, **kwargs)
 
 
-def dataset_mapping(dataset: Any) -> dict[str, Iterable[Mapping[str, Any]]]:
-    """Represent a DatasetDict or single Dataset as named iterable splits."""
-    if hasattr(dataset, "keys"):
-        return {str(name): dataset[name] for name in dataset.keys()}
-    return {"default": dataset}
-
-
 def first_value(row: Mapping[str, Any], *names: str) -> Any:
     normalized = {str(key).lower().replace("_", "-"): value for key, value in row.items()}
     for name in names:
         key = name.lower().replace("_", "-")
         if key in normalized:
             return normalized[key]
-    return None
-
-
-def normalized_role(split_name: str) -> str:
-    name = split_name.lower()
-    if "train" in name:
-        return "train"
-    if "dev" in name or "valid" in name or "validation" in name:
-        return "dev"
-    return "test"
-
-
-def choose_split(splits: Mapping[str, Any], preferred: tuple[str, ...]) -> Any | None:
-    lowered = {name.lower(): value for name, value in splits.items()}
-    for candidate in preferred:
-        if candidate in lowered:
-            return lowered[candidate]
-    for name, value in splits.items():
-        if any(candidate in name.lower() for candidate in preferred):
-            return value
     return None
 
 
@@ -209,23 +182,6 @@ def prepare_nq320k(
     return outputs
 
 
-def load_beir_main_splits(dataset_id: str, cache_dir: Path) -> tuple[Any, dict[str, Iterable[Mapping[str, Any]]]]:
-    try:
-        loaded = load_dataset(dataset_id, cache_dir=str(cache_dir))
-        return loaded, dataset_mapping(loaded)
-    except Exception as exc:
-        raise RuntimeError(f"Unable to load BEIR dataset '{dataset_id}': {exc}") from exc
-
-
-def fallback_beir_split(dataset_id: str, cache_dir: Path, config_name: str, split_names: tuple[str, ...]) -> Any | None:
-    for split_name in split_names:
-        try:
-            return load_dataset(dataset_id, config_name, split=split_name, cache_dir=str(cache_dir))
-        except Exception:
-            continue
-    return None
-
-
 def normalize_beir_corpus(source: Iterable[Mapping[str, Any]], max_docs: int | None) -> tuple[list[dict[str, str]], set[str]]:
     rows: list[dict[str, str]] = []
     ids: set[str] = set()
@@ -250,7 +206,7 @@ def normalize_beir_queries(source: Iterable[Mapping[str, Any]], max_queries: int
         if limit_reached(len(rows), max_queries):
             break
         query_id = safe_text(first_value(row, "_id", "id", "query-id", "query_id", "qid"))
-        text = safe_text(first_value(row, "text", "query", "question"))
+        text = safe_text(first_value(row, "text", "title", "query", "question"))
         if not query_id or not text or query_id in ids:
             continue
         ids.add(query_id)
@@ -275,61 +231,90 @@ def normalize_beir_qrels(
     return rows
 
 
+def available_hf_splits(dataset_id: str, cache_dir: Path) -> list[str]:
+    """Return advertised splits when the installed datasets version supports discovery."""
+    try:
+        from datasets import get_dataset_split_names
+    except ImportError:
+        return []
+
+    try:
+        return list(get_dataset_split_names(dataset_id, cache_dir=str(cache_dir)))
+    except TypeError:
+        try:
+            return list(get_dataset_split_names(dataset_id))
+        except Exception:
+            return []
+    except Exception:
+        return []
+
+
+def load_beir_qrels(dataset_id: str, cache_dir: Path) -> tuple[Any, str]:
+    """Load the most appropriate qrels split, tolerating dataset-version split differences."""
+    split_names = available_hf_splits(dataset_id, cache_dir)
+    if split_names:
+        preferred = ("test", "validation", "dev", "train")
+        lowered = {name.lower(): name for name in split_names}
+        selected_split = next((lowered[name] for name in preferred if name in lowered), split_names[0])
+        try:
+            return load_dataset(dataset_id, split=selected_split, cache_dir=str(cache_dir)), selected_split
+        except Exception as exc:
+            raise RuntimeError(f"Unable to load BEIR qrels dataset '{dataset_id}' split '{selected_split}': {exc}") from exc
+
+    try:
+        loaded = load_dataset(dataset_id, cache_dir=str(cache_dir))
+    except Exception as exc:
+        raise RuntimeError(f"Unable to load BEIR qrels dataset '{dataset_id}': {exc}") from exc
+    if hasattr(loaded, "keys"):
+        available = list(loaded.keys())
+        if not available:
+            raise RuntimeError(f"BEIR qrels dataset '{dataset_id}' exposes no splits.")
+        preferred = ("test", "validation", "dev", "train")
+        lowered = {str(name).lower(): str(name) for name in available}
+        selected_split = next((lowered[name] for name in preferred if name in lowered), str(available[0]))
+        return loaded[selected_split], selected_split
+    return loaded, "default"
+
+
 def prepare_beir(
     config: Mapping[str, Any], cache_dir: Path, max_docs: int | None, max_queries: int | None
 ) -> dict[str, tuple[str, Any]]:
-    require_keys(config, ("hf_qrels",))
-    _loaded, main_splits = load_beir_main_splits(config["hf_dataset"], cache_dir)
-    corpus_source = choose_split(main_splits, ("corpus", "documents", "docs"))
-    if corpus_source is None:
-        corpus_source = fallback_beir_split(config["hf_dataset"], cache_dir, "corpus", ("corpus", "train"))
-    if corpus_source is None:
-        raise RuntimeError("Could not detect a BEIR corpus split. Inspect the Hugging Face dataset schema and update the adapter.")
+    require_keys(config, ("hf_corpus_config", "hf_queries_config", "hf_corpus_split", "hf_queries_split", "hf_qrels"))
+    try:
+        corpus_source = load_dataset(
+            config["hf_dataset"],
+            config["hf_corpus_config"],
+            split=config["hf_corpus_split"],
+            cache_dir=str(cache_dir),
+        )
+    except Exception as exc:
+        raise RuntimeError(f"Unable to load BEIR corpus '{config['hf_dataset']}' with configured corpus split: {exc}") from exc
     corpus_rows, corpus_ids = normalize_beir_corpus(corpus_source, max_docs)
 
-    query_sources: dict[str, Iterable[Mapping[str, Any]]] = {}
-    for name, split in main_splits.items():
-        if split is corpus_source or any(token in name.lower() for token in ("corpus", "document", "docs")):
-            continue
-        query_sources[normalized_role(name)] = split
-    if not query_sources:
-        fallback_queries = fallback_beir_split(config["hf_dataset"], cache_dir, "queries", ("queries", "test", "train"))
-        if fallback_queries is not None:
-            query_sources["test"] = fallback_queries
-
-    query_rows: dict[str, list[dict[str, str]]] = {}
-    query_ids: dict[str, set[str]] = {}
-    for role, source in query_sources.items():
-        rows, ids = normalize_beir_queries(source, max_queries)
-        if rows:
-            query_rows[role] = rows
-            query_ids[role] = ids
+    try:
+        query_source = load_dataset(
+            config["hf_dataset"],
+            config["hf_queries_config"],
+            split=config["hf_queries_split"],
+            cache_dir=str(cache_dir),
+        )
+    except Exception as exc:
+        raise RuntimeError(f"Unable to load BEIR queries '{config['hf_dataset']}' with configured queries split: {exc}") from exc
+    query_rows, query_ids = normalize_beir_queries(query_source, max_queries)
     if not query_rows:
         raise RuntimeError("BEIR query normalization produced no valid queries.")
 
-    try:
-        qrels_loaded = load_dataset(config["hf_qrels"], cache_dir=str(cache_dir))
-    except Exception as exc:
-        raise RuntimeError(f"Unable to load BEIR qrels dataset '{config['hf_qrels']}': {exc}") from exc
-    qrels_splits = dataset_mapping(qrels_loaded)
-    qrel_rows: dict[str, list[tuple[str, str, int]]] = {}
-    for split_name, source in qrels_splits.items():
-        role = normalized_role(split_name)
-        if role not in query_ids and len(query_ids) == 1:
-            role = next(iter(query_ids))
-        if role not in query_ids:
-            continue
-        rows = normalize_beir_qrels(source, query_ids[role], corpus_ids)
-        if rows:
-            qrel_rows.setdefault(role, []).extend(rows)
+    qrels_source, qrels_split = load_beir_qrels(config["hf_qrels"], cache_dir)
+    qrel_rows = normalize_beir_qrels(qrels_source, query_ids, corpus_ids)
     if not qrel_rows:
         raise RuntimeError("BEIR qrels normalization produced no rows matching the normalized corpus and queries.")
 
-    outputs: dict[str, tuple[str, Any]] = {"corpus.jsonl": ("jsonl", corpus_rows)}
-    for role, rows in query_rows.items():
-        outputs[f"queries_{role}.jsonl"] = ("jsonl", rows)
-    for role, rows in qrel_rows.items():
-        outputs[f"qrels_{role}.tsv"] = ("qrels", rows)
+    print(f"Using BEIR qrels split: {qrels_split}")
+    outputs: dict[str, tuple[str, Any]] = {
+        "corpus.jsonl": ("jsonl", corpus_rows),
+        "queries_test.jsonl": ("jsonl", query_rows),
+        "qrels_test.tsv": ("qrels", qrel_rows),
+    }
     return outputs
 
 

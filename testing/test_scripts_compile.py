@@ -8,6 +8,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 FILES = (
     "scripts/data_utils.py",
+    "scripts/debug_beir_loading.py",
     "scripts/prepare_data.py",
     "scripts/inspect_dataset.py",
     "scripts/validate_processed_data.py",

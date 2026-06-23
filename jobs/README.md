@@ -12,6 +12,8 @@ Each job sources `configs/hpc_env.sh`, which activates the existing project envi
 
 Phase 1 data preparation, inspection, and validation are CPU-only. These jobs use `partition=fast`; do not request a GPU for data processing.
 
+BEIR datasets expose separate Hugging Face configurations for `corpus` and `queries`. Pull this fix on HPC before preparing SciFact or FiQA.
+
 Prepare the three configured datasets:
 
 ```bash

@@ -1,6 +1,10 @@
 dataset_name: beir_scifact
 source: huggingface
 hf_dataset: BeIR/scifact
+hf_corpus_config: corpus
+hf_queries_config: queries
+hf_corpus_split: corpus
+hf_queries_split: queries
 hf_qrels: BeIR/scifact-qrels
 task: ood_eval
 output_dir: data/processed/beir_scifact
