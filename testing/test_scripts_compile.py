@@ -23,6 +23,7 @@ FILES = (
     "scripts/search_faiss_ivf.py",
     "scripts/run_faiss_ivf_sweep.py",
     "scripts/faiss_flat_check.py",
+    "scripts/plot_faiss_ivf_sweeps.py",
     "scripts/install_project_deps.sh",
 )
 

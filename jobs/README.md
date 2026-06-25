@@ -89,3 +89,31 @@ Outputs:
 data/indexes/faiss_ivf/{dataset}/sbert_distilbert_nli_stsb/
 results/faiss_ivf/{dataset}/sbert_distilbert_nli_stsb/sweep_summary.csv
 ```
+
+## Phase 3b: FAISS IVF plots
+
+Phase 3b reads Phase 2 exact metrics and Phase 3 FAISS IVF sweep summaries, then generates publication-quality Matplotlib figures.
+
+The plotting script saves every figure as both SVG and PNG:
+
+- SVG for high-quality vector output
+- PNG for quick viewing and slides
+
+Run:
+
+```bash
+sbatch jobs/plot_faiss_ivf.sbatch
+```
+
+Optional log-scale x-axis version:
+
+```bash
+sbatch jobs/plot_faiss_ivf_logx.sbatch
+```
+
+Outputs:
+
+```text
+results/plots/faiss_ivf/
+results/plots/faiss_ivf_logx/
+```

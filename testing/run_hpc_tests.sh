@@ -16,6 +16,9 @@ python -c "import faiss; print('faiss ok:', faiss.__version__ if hasattr(faiss, 
 python testing/test_phase3_configs.py
 python testing/test_faiss_ivf_fake.py
 python testing/test_faiss_flat_check_fake.py
+python -c "import matplotlib; print('matplotlib ok:', matplotlib.__version__)"
+python testing/test_plot_faiss_ivf_fake.py
+python testing/test_plot_faiss_ivf_column_normalization.py
 python -c "import datasets; print('datasets ok')"
 python -c "import sentence_transformers; print('sentence-transformers ok')"
 python -c "import yaml; print('yaml ok')"

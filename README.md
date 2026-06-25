@@ -91,6 +91,18 @@ The sweep reports the same relevance metrics as Phase 2 plus efficiency diagnost
 
 This measures the standard quality-efficiency trade-off of disjoint ANNS indexing. It is the conventional post-hoc baseline that later EHI and EHI-MRL phases must beat.
 
+## Phase 3b: FAISS IVF result aggregation and plotting
+
+Phase 3b does not run retrieval. It reads existing Phase 2 exact metric JSON files and Phase 3 FAISS IVF `sweep_summary.csv` files, then generates quality-vs-efficiency figures.
+
+The main x-axis is `% documents visited`. Each figure is saved as both SVG for high-quality vector output and PNG for quick viewing or slides. The plotting script also writes `best_operating_points.csv`.
+
+Main plots:
+
+- NQ320K: Recall@100, Recall@10, MRR@10
+- BEIR SciFact: nDCG@10, Recall@100, MRR@10
+- BEIR FiQA: nDCG@10, Recall@100, MRR@10
+
 ## HPC environment
 
 - Project path: `/shared/projects/big_data_psaclay/students_M2/melmoussaoui/ehi-mrl`
