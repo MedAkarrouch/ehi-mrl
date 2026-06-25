@@ -39,6 +39,10 @@ Corpus rows use `{"_id": "doc-id", "title": "", "text": "document text"}` and qu
 
 NQ320K is normalized for training and in-domain evaluation, including one deterministic sampled negative per training query. SciFact and FiQA are normalized for out-of-distribution evaluation only, without default training triples; their Hugging Face sources use separate `corpus` and `queries` configs. Source datasets are cached from Hugging Face and their normalized outputs remain ignored by Git.
 
+### Phase 1 diagnostic
+
+`scripts/analyze_qrels.py` reports qrels statistics, including the distribution of relevant documents per query. This helps verify whether a dataset behaves like a pair-based dataset, such as NQ320K, or a qrels-based evaluation dataset with potentially multiple relevant documents per query, such as BEIR SciFact and BEIR FiQA.
+
 Run the offline, Codex-safe tests (they do not download datasets):
 
 ```bash

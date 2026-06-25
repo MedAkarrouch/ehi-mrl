@@ -28,4 +28,12 @@ Validate the normalized outputs after preparation:
 sbatch jobs/validate_all_processed_data.sbatch
 ```
 
+Qrels analysis:
+
+```bash
+sbatch jobs/analyze_qrels.sbatch
+```
+
+This is a CPU-only diagnostic job. It reports how many relevant documents each query has in each split.
+
 The GPU template remains reserved for later embedding-generation and training phases.

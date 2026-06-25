@@ -12,6 +12,7 @@ FILES = (
     "scripts/prepare_data.py",
     "scripts/inspect_dataset.py",
     "scripts/validate_processed_data.py",
+    "scripts/analyze_qrels.py",
     "scripts/install_project_deps.sh",
 )
 
