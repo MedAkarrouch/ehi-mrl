@@ -13,6 +13,11 @@ FILES = (
     "scripts/inspect_dataset.py",
     "scripts/validate_processed_data.py",
     "scripts/analyze_qrels.py",
+    "scripts/retrieval_utils.py",
+    "scripts/embed_dataset.py",
+    "scripts/exact_search.py",
+    "scripts/evaluate_run.py",
+    "scripts/run_exact_baseline.py",
     "scripts/install_project_deps.sh",
 )
 

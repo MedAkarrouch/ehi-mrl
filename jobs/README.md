@@ -36,4 +36,31 @@ sbatch jobs/analyze_qrels.sbatch
 
 This is a CPU-only diagnostic job. It reports how many relevant documents each query has in each split.
 
-The GPU template remains reserved for later embedding-generation and training phases.
+## Phase 2: exact dense baseline
+
+These jobs use the frozen encoder:
+sentence-transformers/distilbert-base-nli-stsb-mean-tokens
+
+They create embeddings, run exact cosine search, and compute retrieval metrics.
+
+The full GPU jobs prefer H200 because it has much larger VRAM than L40S and reduces out-of-memory risk during exact dense search. If the cluster rejects `--gres=gpu:h200:1`, change only the gres line to the local H200 syntax or fallback to `--gres=gpu:l40s:1`.
+
+Debug:
+
+```bash
+sbatch jobs/exact_baseline_debug_nq320k.sbatch
+```
+
+Full runs:
+
+```bash
+sbatch jobs/exact_baseline_nq320k.sbatch
+sbatch jobs/exact_baseline_scifact.sbatch
+sbatch jobs/exact_baseline_fiqa.sbatch
+```
+
+Metrics-only rerun:
+
+```bash
+sbatch jobs/evaluate_exact_all.sbatch
+```

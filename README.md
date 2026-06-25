@@ -58,6 +58,25 @@ sbatch jobs/prepare_data_fiqa.sbatch
 sbatch jobs/validate_all_processed_data.sbatch
 ```
 
+## Phase 2: frozen exact dense retrieval baseline
+
+Phase 2 establishes a frozen imported encoder baseline before MRL, FAISS, and EHI. It is not training and does not fine-tune the model.
+
+- Encoder: `sentence-transformers/distilbert-base-nli-stsb-mean-tokens`
+- Similarity: cosine, implemented as dot product over normalized `float32` embeddings
+- Search: exact dense retrieval, comparing every query embedding against every corpus embedding in query batches and corpus chunks
+- Main jobs: create embeddings, write exact run files, and compute retrieval metrics
+
+Primary metrics:
+
+- NQ320K dev: Hit@1, MRR@10, Recall@10, Recall@100
+- BEIR SciFact test: nDCG@10, Recall@100, MRR@10, Hit@1
+- BEIR FiQA test: nDCG@10, Recall@100, MRR@10, Hit@1
+
+Evaluation averages only over qrels-covered queries. `Hit@1` means relevance-based top-1 correctness. Do not call this `NN@1`; `NN@1` is reserved for later exact-vs-approximate index agreement in FAISS/EHI phases.
+
+Full embedding/search jobs prefer H200 to reduce exact-search out-of-memory risk. L40S is documented only as a fallback in the Slurm job comments.
+
 ## HPC environment
 
 - Project path: `/shared/projects/big_data_psaclay/students_M2/melmoussaoui/ehi-mrl`

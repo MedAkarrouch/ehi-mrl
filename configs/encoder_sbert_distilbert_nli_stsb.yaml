@@ -1,0 +1,8 @@
+encoder_name: sbert_distilbert_nli_stsb
+hf_model_name: sentence-transformers/distilbert-base-nli-stsb-mean-tokens
+normalize_embeddings: true
+embedding_dtype: float32
+document_batch_size: 256
+query_batch_size: 512
+max_seq_length: null
+device: auto
