@@ -1,0 +1,17 @@
+exact_baseline_config: configs/exact_baseline_nq320k.yaml
+dataset_name: nq320k
+split: dev
+embedding_dir: data/embeddings/nq320k/sbert_distilbert_nli_stsb
+index_dir: data/indexes/faiss_ivf/nq320k/sbert_distilbert_nli_stsb
+results_dir: results/faiss_ivf/nq320k/sbert_distilbert_nli_stsb
+metric: inner_product
+top_k: 100
+nlist_values: [128, 256, 512, 1024]
+nprobe_values: [1, 2, 4, 8, 16, 32, 64, 128]
+max_train_vectors: null
+omp_threads: auto
+primary_metrics:
+  - Hit@1
+  - MRR@10
+  - Recall@10
+  - Recall@100

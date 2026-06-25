@@ -21,6 +21,11 @@ def parse_simple_yaml_scalar(value: str) -> Any:
         return ""
     if cleaned.lower() == "null":
         return None
+    if cleaned.startswith("[") and cleaned.endswith("]"):
+        inner = cleaned[1:-1].strip()
+        if not inner:
+            return []
+        return [parse_simple_yaml_scalar(item.strip()) for item in inner.split(",")]
     if (cleaned.startswith('"') and cleaned.endswith('"')) or (cleaned.startswith("'") and cleaned.endswith("'")):
         return cleaned[1:-1]
     lowered = cleaned.lower()

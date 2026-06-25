@@ -77,6 +77,20 @@ Evaluation averages only over qrels-covered queries. `Hit@1` means relevance-bas
 
 Full embedding/search jobs prefer H200 to reduce exact-search out-of-memory risk. L40S is documented only as a fallback in the Slurm job comments.
 
+## Phase 3: FAISS IVF approximate-search baseline
+
+Phase 3 is a post-hoc FAISS IVF approximate-search baseline. It reuses the frozen SBERT embeddings created by Phase 2, does not train or fine-tune the encoder, and does not use GPU FAISS.
+
+This phase uses `faiss-cpu` to build IVF indexes for different `nlist` values and search them with different `nprobe` values. FAISS uses inner product because Phase 2 embeddings are already normalized, so inner product is cosine similarity.
+
+The sweep reports the same relevance metrics as Phase 2 plus efficiency diagnostics:
+
+- `%DocsVisited`
+- `AvgDocsVisited`
+- `LatencyMsPerQuery`
+
+This measures the standard quality-efficiency trade-off of disjoint ANNS indexing. It is the conventional post-hoc baseline that later EHI and EHI-MRL phases must beat.
+
 ## HPC environment
 
 - Project path: `/shared/projects/big_data_psaclay/students_M2/melmoussaoui/ehi-mrl`

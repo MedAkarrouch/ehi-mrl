@@ -64,3 +64,28 @@ Metrics-only rerun:
 ```bash
 sbatch jobs/evaluate_exact_all.sbatch
 ```
+
+## Phase 3: FAISS IVF baseline
+
+Phase 3 reuses Phase 2 frozen SBERT embeddings and builds post-hoc FAISS IVF indexes. This is CPU-only and uses `faiss-cpu`; do not request GPU and do not install FAISS-GPU.
+
+Debug:
+
+```bash
+sbatch jobs/faiss_ivf_debug_scifact.sbatch
+```
+
+Full sweeps:
+
+```bash
+sbatch jobs/faiss_ivf_nq320k.sbatch
+sbatch jobs/faiss_ivf_scifact.sbatch
+sbatch jobs/faiss_ivf_fiqa.sbatch
+```
+
+Outputs:
+
+```text
+data/indexes/faiss_ivf/{dataset}/sbert_distilbert_nli_stsb/
+results/faiss_ivf/{dataset}/sbert_distilbert_nli_stsb/sweep_summary.csv
+```

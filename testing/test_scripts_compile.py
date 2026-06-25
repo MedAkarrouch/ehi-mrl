@@ -18,6 +18,11 @@ FILES = (
     "scripts/exact_search.py",
     "scripts/evaluate_run.py",
     "scripts/run_exact_baseline.py",
+    "scripts/faiss_utils.py",
+    "scripts/build_faiss_ivf.py",
+    "scripts/search_faiss_ivf.py",
+    "scripts/run_faiss_ivf_sweep.py",
+    "scripts/faiss_flat_check.py",
     "scripts/install_project_deps.sh",
 )
 

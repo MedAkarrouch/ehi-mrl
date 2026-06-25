@@ -12,6 +12,10 @@ python testing/test_analyze_qrels_fake.py
 python testing/test_phase2_configs.py
 python testing/test_retrieval_metrics_fake.py
 python testing/test_exact_search_fake.py
+python -c "import faiss; print('faiss ok:', faiss.__version__ if hasattr(faiss, '__version__') else 'installed')"
+python testing/test_phase3_configs.py
+python testing/test_faiss_ivf_fake.py
+python testing/test_faiss_flat_check_fake.py
 python -c "import datasets; print('datasets ok')"
 python -c "import sentence_transformers; print('sentence-transformers ok')"
 python -c "import yaml; print('yaml ok')"
