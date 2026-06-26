@@ -24,6 +24,12 @@ FILES = (
     "scripts/run_faiss_ivf_sweep.py",
     "scripts/faiss_flat_check.py",
     "scripts/plot_faiss_ivf_sweeps.py",
+    "scripts/dense_modeling.py",
+    "scripts/train_dense_biencoder.py",
+    "scripts/benchmark_dense_batch_size.py",
+    "scripts/embed_dense_model.py",
+    "scripts/run_finetuned_dense_exact.py",
+    "scripts/run_finetuned_dense_faiss.py",
     "scripts/install_project_deps.sh",
 )
 

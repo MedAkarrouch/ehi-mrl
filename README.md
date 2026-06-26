@@ -103,6 +103,19 @@ Main plots:
 - BEIR SciFact: nDCG@10, Recall@100, MRR@10
 - BEIR FiQA: nDCG@10, Recall@100, MRR@10
 
+## Phase 4: Fine-tuned Dense Retriever
+
+This phase trains a rigid dense dual encoder on NQ320K using in-batch contrastive learning. It produces 768-dimensional query/document embeddings and evaluates both exhaustive exact search and post-hoc FAISS-IVF search.
+
+Method labels:
+
+- Fine-tuned Dense + Exact Search
+- Fine-tuned Dense + FAISS-IVF
+
+This phase does not use MRL, EHI, learned routing, or adaptive dimensions.
+
+Phase 4 does not calculate or report Hit@1.
+
 ## HPC environment
 
 - Project path: `/shared/projects/big_data_psaclay/students_M2/melmoussaoui/ehi-mrl`

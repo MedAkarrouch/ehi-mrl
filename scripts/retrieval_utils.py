@@ -13,6 +13,7 @@ from data_utils import ensure_dir, iter_jsonl, load_yaml, safe_text
 
 QRELS_HEADER = ["query-id", "corpus-id", "score"]
 RUN_HEADER = ["query-id", "corpus-id", "score", "rank"]
+DEFAULT_RETRIEVAL_METRICS = ("Hit@1", "MRR@10", "Recall@1", "Recall@10", "Recall@100", "nDCG@10")
 
 
 def parse_simple_yaml_scalar(value: str) -> Any:
@@ -262,15 +263,13 @@ def compute_retrieval_metrics(
     qrels: Mapping[str, Mapping[str, float]],
     run: Mapping[str, Mapping[str, float]],
     evaluated_query_ids: Iterable[str],
+    metric_names: Sequence[str] | None = None,
 ) -> dict[str, float]:
-    metric_sums = {
-        "Hit@1": 0.0,
-        "MRR@10": 0.0,
-        "Recall@1": 0.0,
-        "Recall@10": 0.0,
-        "Recall@100": 0.0,
-        "nDCG@10": 0.0,
-    }
+    requested_metrics = tuple(metric_names or DEFAULT_RETRIEVAL_METRICS)
+    unsupported = [metric_name for metric_name in requested_metrics if metric_name not in DEFAULT_RETRIEVAL_METRICS]
+    if unsupported:
+        raise RuntimeError(f"Unsupported retrieval metric(s): {', '.join(unsupported)}")
+    metric_sums = {metric_name: 0.0 for metric_name in requested_metrics}
     query_count = 0
     for query_id in evaluated_query_ids:
         relevant_scores = {doc_id: score for doc_id, score in qrels.get(query_id, {}).items() if score > 0}
@@ -278,20 +277,23 @@ def compute_retrieval_metrics(
         ranked_doc_ids = list(run.get(query_id, {}).keys())
         query_count += 1
 
-        if ranked_doc_ids[:1] and ranked_doc_ids[0] in relevant_doc_ids:
+        if "Hit@1" in metric_sums and ranked_doc_ids[:1] and ranked_doc_ids[0] in relevant_doc_ids:
             metric_sums["Hit@1"] += 1.0
 
-        for rank, doc_id in enumerate(ranked_doc_ids[:10], start=1):
-            if doc_id in relevant_doc_ids:
-                metric_sums["MRR@10"] += 1.0 / rank
-                break
+        if "MRR@10" in metric_sums:
+            for rank, doc_id in enumerate(ranked_doc_ids[:10], start=1):
+                if doc_id in relevant_doc_ids:
+                    metric_sums["MRR@10"] += 1.0 / rank
+                    break
 
         for cutoff in (1, 10, 100):
-            if relevant_doc_ids:
+            metric_name = f"Recall@{cutoff}"
+            if metric_name in metric_sums and relevant_doc_ids:
                 found = len(set(ranked_doc_ids[:cutoff]) & relevant_doc_ids)
-                metric_sums[f"Recall@{cutoff}"] += found / len(relevant_doc_ids)
+                metric_sums[metric_name] += found / len(relevant_doc_ids)
 
-        metric_sums["nDCG@10"] += ndcg_at_k(ranked_doc_ids, relevant_scores, 10)
+        if "nDCG@10" in metric_sums:
+            metric_sums["nDCG@10"] += ndcg_at_k(ranked_doc_ids, relevant_scores, 10)
 
     if query_count == 0:
         return {name: 0.0 for name in metric_sums}

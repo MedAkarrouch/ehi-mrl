@@ -13,6 +13,7 @@ from typing import Any
 from data_utils import ensure_dir
 from retrieval_utils import (
     compute_retrieval_metrics,
+    DEFAULT_RETRIEVAL_METRICS,
     filter_queries_to_qrels_covered,
     load_config,
     load_qrels_tsv,
@@ -24,7 +25,7 @@ from retrieval_utils import (
 )
 
 
-ALL_METRICS = ("Hit@1", "MRR@10", "Recall@1", "Recall@10", "Recall@100", "nDCG@10")
+ALL_METRICS = DEFAULT_RETRIEVAL_METRICS
 
 
 def write_json(path: Path, data: dict[str, Any]) -> None:
@@ -34,7 +35,7 @@ def write_json(path: Path, data: dict[str, Any]) -> None:
         handle.write("\n")
 
 
-def write_summary_csv(path: Path, result: dict[str, Any]) -> None:
+def write_summary_csv(path: Path, result: dict[str, Any], metric_names: list[str]) -> None:
     ensure_dir(path.parent)
     fieldnames = [
         "dataset_name",
@@ -45,7 +46,7 @@ def write_summary_csv(path: Path, result: dict[str, Any]) -> None:
         "query_rows_with_no_qrels",
         "evaluated_queries",
         "missing_run_queries",
-        *ALL_METRICS,
+        *metric_names,
     ]
     row = {
         "dataset_name": result["dataset_name"],
@@ -75,7 +76,7 @@ def print_summary(result: dict[str, Any]) -> None:
         print(f"  {metric_name}: {result['metrics'][metric_name]:.6f}")
     print("")
     print("All computed metrics:")
-    for metric_name in ALL_METRICS:
+    for metric_name in result["metric_names"]:
         print(f"  {metric_name}: {result['metrics'][metric_name]:.6f}")
 
 
@@ -122,7 +123,11 @@ def main() -> int:
             preview = ", ".join(missing_run_queries[:10])
             raise RuntimeError(f"Run file is missing predictions for {len(missing_run_queries)} qrels-covered query id(s): {preview}")
 
-        metrics = compute_retrieval_metrics(qrels, run, evaluated_query_ids)
+        metric_names = list(config.get("metrics") or ALL_METRICS)
+        unsupported_metrics = [metric_name for metric_name in metric_names if metric_name not in ALL_METRICS]
+        if unsupported_metrics:
+            raise RuntimeError(f"Unsupported metric requested in config: {', '.join(unsupported_metrics)}")
+        metrics = compute_retrieval_metrics(qrels, run, evaluated_query_ids, metric_names=metric_names)
         diagnostics = {
             "qrels_rows": sum(len(doc_scores) for doc_scores in qrels.values()),
             "qrels_covered_queries": len(qrels),
@@ -133,8 +138,8 @@ def main() -> int:
         }
         primary_metrics = list(config.get("primary_metrics", []))
         for metric_name in primary_metrics:
-            if metric_name not in metrics:
-                raise RuntimeError(f"Unsupported primary metric requested in config: {metric_name}")
+            if metric_name not in metric_names:
+                raise RuntimeError(f"Primary metric '{metric_name}' is not included in requested metrics.")
 
         result: dict[str, Any] = {
             "dataset_name": config["dataset_name"],
@@ -142,13 +147,14 @@ def main() -> int:
             "run_file": str(run_path),
             "qrels_file": str(qrels_path),
             "query_file": str(query_path),
+            "metric_names": metric_names,
             "primary_metrics": primary_metrics,
             "metrics": metrics,
             "diagnostics": diagnostics,
         }
         print_summary(result)
         write_json(output_json, result)
-        write_summary_csv(output_csv, result)
+        write_summary_csv(output_csv, result, metric_names)
         print(f"Wrote metrics JSON: {output_json}")
         print(f"Wrote metrics summary CSV: {output_csv}")
         return 0

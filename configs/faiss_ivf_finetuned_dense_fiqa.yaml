@@ -1,0 +1,22 @@
+exact_baseline_config: configs/exact_finetuned_dense_fiqa.yaml
+dataset_name: beir_fiqa
+split: test
+method_label: Fine-tuned Dense + FAISS-IVF
+embedding_dir: data/embeddings/beir_fiqa/fine_tuned_dense_nq320k_distilbert
+index_dir: data/indexes/faiss_ivf/beir_fiqa/fine_tuned_dense_nq320k_distilbert
+results_dir: results/faiss_ivf/beir_fiqa/fine_tuned_dense_nq320k_distilbert
+metric: inner_product
+top_k: 100
+nlist_values: [64, 128, 256, 512]
+nprobe_values: [1, 2, 4, 8, 16, 32, 64, 128]
+max_train_vectors: null
+omp_threads: auto
+metrics:
+  - nDCG@10
+  - Recall@10
+  - Recall@100
+  - MRR@10
+primary_metrics:
+  - nDCG@10
+  - Recall@100
+  - MRR@10

@@ -18,4 +18,8 @@ python testing/test_faiss_flat_check_fake.py
 python testing/test_plot_faiss_ivf_fake.py
 python testing/test_plot_faiss_ivf_column_normalization.py
 python testing/test_plot_labels.py
+python testing/test_dense_modeling_fake.py
+python testing/test_phase4_configs.py
+python testing/test_evaluate_metric_selection_fake.py
+python testing/test_training_scripts_compile.py
 echo "Codex-safe tests passed. GPU/HPC tests were not run."

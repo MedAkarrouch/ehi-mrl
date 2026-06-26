@@ -20,6 +20,11 @@ python -c "import matplotlib; print('matplotlib ok:', matplotlib.__version__)"
 python testing/test_plot_faiss_ivf_fake.py
 python testing/test_plot_faiss_ivf_column_normalization.py
 python testing/test_plot_labels.py
+python -c "import torch; print('torch:', torch.__version__); print('cuda:', torch.cuda.is_available()); print('bf16:', torch.cuda.is_bf16_supported() if torch.cuda.is_available() else False)"
+python testing/test_dense_modeling_fake.py
+python testing/test_phase4_configs.py
+python testing/test_evaluate_metric_selection_fake.py
+python testing/test_training_scripts_compile.py
 python -c "import datasets; print('datasets ok')"
 python -c "import sentence_transformers; print('sentence-transformers ok')"
 python -c "import yaml; print('yaml ok')"

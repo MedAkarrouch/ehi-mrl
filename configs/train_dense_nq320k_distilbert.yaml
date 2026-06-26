@@ -1,0 +1,45 @@
+run_name: fine_tuned_dense_nq320k_distilbert
+method_label: Fine-tuned Dense
+base_model_name_or_path: sentence-transformers/distilbert-base-nli-stsb-mean-tokens
+
+processed_data_dir: data/processed/nq320k
+train_triples: data/processed/nq320k/triples_train.tsv
+train_queries: data/processed/nq320k/queries_train.jsonl
+corpus: data/processed/nq320k/corpus.jsonl
+
+output_dir: models/fine_tuned_dense/nq320k_distilbert
+cache_dir: .cache/huggingface
+
+max_query_length: 64
+max_doc_length: 192
+pooling: mean
+normalize_embeddings: true
+
+loss: in_batch_contrastive
+temperature: 0.05
+bidirectional_loss: false
+use_explicit_negatives: false
+
+num_train_epochs: 1
+max_steps: null
+per_device_train_batch_size: 512
+gradient_accumulation_steps: 1
+learning_rate: 2.0e-5
+weight_decay: 0.01
+warmup_ratio: 0.05
+max_grad_norm: 1.0
+
+bf16: true
+fp16: false
+tf32: true
+
+num_workers: 8
+pin_memory: true
+persistent_workers: true
+prefetch_factor: 4
+
+seed: 42
+log_every_steps: 50
+save_every_steps: 1000
+keep_last_n_checkpoints: 2
+eval_during_training: false

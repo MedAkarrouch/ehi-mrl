@@ -15,7 +15,7 @@ from data_utils import ensure_dir
 from retrieval_utils import load_config, repo_root_from_script, resolve_path
 
 
-SUMMARY_FIELDS = [
+BASE_SUMMARY_FIELDS = [
     "dataset_name",
     "split",
     "nlist",
@@ -27,12 +27,6 @@ SUMMARY_FIELDS = [
     "percent_docs_visited",
     "search_seconds",
     "latency_ms_per_query",
-    "Hit@1",
-    "MRR@10",
-    "Recall@1",
-    "Recall@10",
-    "Recall@100",
-    "nDCG@10",
 ]
 
 
@@ -65,13 +59,14 @@ def read_json(path: Path) -> dict[str, Any]:
     return data
 
 
-def write_summary_csv(path: Path, rows: list[dict[str, Any]]) -> None:
+def write_summary_csv(path: Path, rows: list[dict[str, Any]], metric_fields: list[str]) -> None:
     ensure_dir(path.parent)
+    fieldnames = [*BASE_SUMMARY_FIELDS, *metric_fields]
     with path.open("w", encoding="utf-8", newline="") as handle:
-        writer = csv.DictWriter(handle, fieldnames=SUMMARY_FIELDS)
+        writer = csv.DictWriter(handle, fieldnames=fieldnames)
         writer.writeheader()
         for row in rows:
-            writer.writerow({field: row.get(field, "") for field in SUMMARY_FIELDS})
+            writer.writerow({field: row.get(field, "") for field in fieldnames})
 
 
 def print_summary(rows: list[dict[str, Any]]) -> None:
@@ -80,13 +75,12 @@ def print_summary(rows: list[dict[str, Any]]) -> None:
         return
     print("")
     print("FAISS IVF sweep summary:")
-    print("nlist\tnprobe\t%DocsVisited\tLatencyMsPerQuery\tHit@1\tMRR@10\tRecall@100\tnDCG@10")
+    print("nlist\tnprobe\t%DocsVisited\tLatencyMsPerQuery\tMRR@10\tRecall@100\tnDCG@10")
     for row in rows:
         print(
             f"{row['nlist']}\t{row['nprobe']}\t"
             f"{float(row.get('percent_docs_visited', 0.0)):.4f}\t"
             f"{float(row.get('latency_ms_per_query', 0.0)):.4f}\t"
-            f"{float(row.get('Hit@1', 0.0)):.6f}\t"
             f"{float(row.get('MRR@10', 0.0)):.6f}\t"
             f"{float(row.get('Recall@100', 0.0)):.6f}\t"
             f"{float(row.get('nDCG@10', 0.0)):.6f}"
@@ -111,6 +105,8 @@ def main() -> int:
         split = str(config["split"])
         results_dir = resolve_path(repo_root, config["results_dir"])
         exact_config = resolve_path(repo_root, config["exact_baseline_config"])
+        exact_config_data = load_config(exact_config)
+        metric_fields = list(config.get("metrics") or exact_config_data.get("metrics") or ["Hit@1", "MRR@10", "Recall@1", "Recall@10", "Recall@100", "nDCG@10"])
         nlist_values = parse_int_values(args.nlist, list(config["nlist_values"]))
         nprobe_values = parse_int_values(args.nprobe, list(config["nprobe_values"]))
 
@@ -188,7 +184,7 @@ def main() -> int:
                     rows.append(row)
 
         summary_path = results_dir / "sweep_summary.csv"
-        write_summary_csv(summary_path, rows)
+        write_summary_csv(summary_path, rows, metric_fields)
         print_summary(rows)
         print(f"Wrote FAISS IVF sweep summary: {summary_path}")
         return 0

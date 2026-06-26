@@ -117,3 +117,31 @@ Outputs:
 results/plots/faiss_ivf/
 results/plots/faiss_ivf_logx/
 ```
+
+## Phase 4 jobs
+
+1. Optional H200 batch benchmark:
+
+```bash
+sbatch jobs/benchmark_dense_batch_h200.sbatch
+```
+
+2. Train dense retriever:
+
+```bash
+sbatch jobs/train_dense_nq320k_h200.sbatch
+```
+
+3. Encode/evaluate exact search:
+
+```bash
+sbatch jobs/eval_finetuned_dense_exact_h200.sbatch
+```
+
+4. Run FAISS-IVF sweeps:
+
+```bash
+sbatch jobs/faiss_ivf_finetuned_dense_nq320k.sbatch
+sbatch jobs/faiss_ivf_finetuned_dense_scifact.sbatch
+sbatch jobs/faiss_ivf_finetuned_dense_fiqa.sbatch
+```
