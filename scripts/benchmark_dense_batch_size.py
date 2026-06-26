@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import argparse
 import csv
+import gc
 import sys
 import time
 from pathlib import Path
@@ -14,26 +15,54 @@ from retrieval_utils import load_config, repo_root_from_script, resolve_path
 from train_dense_biencoder import PairDataset, make_collate_fn, read_jsonl_texts, read_training_pairs
 
 
+FIELDNAMES = [
+    "batch_size",
+    "status",
+    "mean_step_time_sec",
+    "examples_per_sec",
+    "peak_cuda_memory_allocated_gb",
+    "peak_cuda_memory_reserved_gb",
+    "loss",
+    "error",
+]
+
+
 def parse_batch_sizes(value: str) -> list[int]:
     return [int(part.strip()) for part in value.split(",") if part.strip()]
 
 
-def write_rows(path: Path, rows: list[dict[str, object]]) -> None:
+def parse_bool(value: str) -> bool:
+    lowered = value.strip().lower()
+    if lowered in {"1", "true", "yes", "y"}:
+        return True
+    if lowered in {"0", "false", "no", "n"}:
+        return False
+    raise argparse.ArgumentTypeError(f"Expected true/false, got: {value}")
+
+
+def initialize_csv(path: Path) -> None:
     ensure_dir(path.parent)
-    fieldnames = [
-        "batch_size",
-        "status",
-        "mean_step_time_sec",
-        "examples_per_sec",
-        "peak_cuda_memory_allocated_gb",
-        "peak_cuda_memory_reserved_gb",
-        "loss",
-        "error",
-    ]
     with path.open("w", encoding="utf-8", newline="") as handle:
-        writer = csv.DictWriter(handle, fieldnames=fieldnames)
+        writer = csv.DictWriter(handle, fieldnames=FIELDNAMES)
+        writer.writeheader()
+
+
+def write_rows(path: Path, rows: list[dict[str, object]]) -> None:
+    with path.open("w", encoding="utf-8", newline="") as handle:
+        writer = csv.DictWriter(handle, fieldnames=FIELDNAMES)
         writer.writeheader()
         writer.writerows(rows)
+        handle.flush()
+
+
+def cleanup_cuda(torch_module: object) -> None:
+    gc.collect()
+    try:
+        if torch_module.cuda.is_available():
+            torch_module.cuda.synchronize()
+            torch_module.cuda.empty_cache()
+    except RuntimeError:
+        pass
 
 
 def main() -> int:
@@ -42,6 +71,9 @@ def main() -> int:
     parser.add_argument("--batch-sizes", default="128,256,512,768,1024,1536,2048")
     parser.add_argument("--steps", type=int, default=20)
     parser.add_argument("--output", type=Path, default=Path("results/training_benchmarks/dense_nq320k_h200_batch_sweep.csv"))
+    parser.add_argument("--num-workers", type=int, default=2, help="Benchmark DataLoader worker count.")
+    parser.add_argument("--prefetch-factor", type=int, default=2, help="Benchmark DataLoader prefetch factor.")
+    parser.add_argument("--persistent-workers", type=parse_bool, default=False, help="Use persistent DataLoader workers.")
     args = parser.parse_args()
 
     try:
@@ -52,6 +84,8 @@ def main() -> int:
         if not torch.cuda.is_available():
             raise RuntimeError("CUDA is required for the H200 batch-size benchmark.")
         repo_root = repo_root_from_script(__file__)
+        output_path = resolve_path(repo_root, args.output)
+        initialize_csv(output_path)
         config = load_config(resolve_path(repo_root, args.config))
         device = torch.device("cuda")
         if hasattr(torch, "set_float32_matmul_precision") and bool(config.get("tf32", True)):
@@ -73,18 +107,20 @@ def main() -> int:
         for batch_size in parse_batch_sizes(args.batch_sizes):
             torch.cuda.empty_cache()
             torch.cuda.reset_peak_memory_stats()
+            optimizer = None
+            dataloader = None
             optimizer = torch.optim.AdamW(model.parameters(), lr=float(config["learning_rate"]), weight_decay=float(config["weight_decay"]))
             loader_kwargs = {
                 "batch_size": batch_size,
                 "shuffle": True,
-                "num_workers": int(config.get("num_workers", 0)),
+                "num_workers": args.num_workers,
                 "pin_memory": bool(config.get("pin_memory", True)),
                 "drop_last": True,
                 "collate_fn": make_collate_fn(tokenizer, int(config["max_query_length"]), int(config["max_doc_length"])),
             }
             if loader_kwargs["num_workers"] > 0:
-                loader_kwargs["persistent_workers"] = bool(config.get("persistent_workers", True))
-                loader_kwargs["prefetch_factor"] = int(config.get("prefetch_factor", 4))
+                loader_kwargs["persistent_workers"] = args.persistent_workers
+                loader_kwargs["prefetch_factor"] = args.prefetch_factor
             dataloader = DataLoader(PairDataset(pairs), **loader_kwargs)
             step_times: list[float] = []
             total_examples = 0
@@ -116,7 +152,6 @@ def main() -> int:
                 if "out of memory" in str(exc).lower():
                     status = "cuda_oom"
                     error = str(exc).splitlines()[0]
-                    torch.cuda.empty_cache()
                 else:
                     raise
             mean_time = sum(step_times) / len(step_times) if step_times else 0.0
@@ -133,7 +168,10 @@ def main() -> int:
                 }
             )
             print(rows[-1])
-        write_rows(resolve_path(repo_root, args.output), rows)
+            write_rows(output_path, rows)
+            del dataloader
+            del optimizer
+            cleanup_cuda(torch)
         return 0
     except RuntimeError as exc:
         print(f"error: {exc}", file=sys.stderr)

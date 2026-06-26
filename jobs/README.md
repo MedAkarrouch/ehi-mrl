@@ -126,6 +126,18 @@ results/plots/faiss_ivf_logx/
 sbatch jobs/benchmark_dense_batch_h200.sbatch
 ```
 
+The first H200 benchmark succeeded through batch size 768 but the job hit the 96G host-RAM limit before completing 1024. This was confirmed by sacct: State=OUT_OF_MEMORY, ReqMem=96G, MaxRSS≈99,041,376K. Use the high-memory benchmark job to test from 1024 upward without rerunning smaller batch sizes.
+
+```bash
+sbatch jobs/benchmark_dense_batch_h200_highmem.sbatch
+```
+
+Optional ultra-high-memory benchmark, if the cluster accepts the 300G request:
+
+```bash
+sbatch jobs/benchmark_dense_batch_h200_ultramem.sbatch
+```
+
 2. Train dense retriever:
 
 ```bash

@@ -25,6 +25,7 @@ python testing/test_dense_modeling_fake.py
 python testing/test_phase4_configs.py
 python testing/test_evaluate_metric_selection_fake.py
 python testing/test_training_scripts_compile.py
+python testing/test_dense_benchmark_infra.py
 python -c "import datasets; print('datasets ok')"
 python -c "import sentence_transformers; print('sentence-transformers ok')"
 python -c "import yaml; print('yaml ok')"

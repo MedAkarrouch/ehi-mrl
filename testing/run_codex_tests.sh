@@ -22,4 +22,5 @@ python testing/test_dense_modeling_fake.py
 python testing/test_phase4_configs.py
 python testing/test_evaluate_metric_selection_fake.py
 python testing/test_training_scripts_compile.py
+python testing/test_dense_benchmark_infra.py
 echo "Codex-safe tests passed. GPU/HPC tests were not run."
