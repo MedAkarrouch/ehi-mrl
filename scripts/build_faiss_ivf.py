@@ -39,7 +39,7 @@ def main() -> int:
         repo_root = repo_root_from_script(__file__)
         config = load_config(resolve_path(repo_root, args.config))
         if config.get("metric") != "inner_product":
-            raise RuntimeError("Phase 3 FAISS IVF currently supports only metric: inner_product.")
+            raise RuntimeError("SBERT + FAISS-IVF currently supports only metric: inner_product.")
 
         index_dir = resolve_path(repo_root, config["index_dir"])
         embedding_dir = resolve_path(repo_root, config["embedding_dir"])

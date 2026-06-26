@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Check FAISS IndexFlatIP agreement with the Phase 2 exact run file."""
+"""Check FAISS IndexFlatIP agreement with the SBERT + Exact Search run file."""
 
 from __future__ import annotations
 
@@ -13,7 +13,7 @@ from retrieval_utils import load_config, load_run_tsv, repo_root_from_script, re
 
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--exact-config", required=True, type=Path, help="Path to a Phase 2 exact baseline config.")
+    parser.add_argument("--exact-config", required=True, type=Path, help="Path to an SBERT + Exact Search config.")
     parser.add_argument("--max-queries", type=int, default=100, help="Maximum queries to check.")
     args = parser.parse_args()
 
@@ -25,7 +25,7 @@ def main() -> int:
         results_dir = resolve_path(repo_root, config["results_dir"])
         exact_run_path = results_dir / f"run_{split}.tsv"
         if not exact_run_path.is_file():
-            raise RuntimeError(f"Phase 2 exact run file does not exist: {exact_run_path}")
+            raise RuntimeError(f"SBERT + Exact Search run file does not exist: {exact_run_path}")
 
         faiss = import_faiss()
         corpus_embeddings, corpus_ids = load_embeddings_and_ids(
@@ -50,7 +50,7 @@ def main() -> int:
         exact_run = load_run_tsv(exact_run_path)
         comparable_query_ids = [query_id for query_id in checked_query_ids if query_id in exact_run]
         if not comparable_query_ids:
-            raise RuntimeError("No checked queries were present in the Phase 2 exact run file.")
+            raise RuntimeError("No checked queries were present in the SBERT + Exact Search run file.")
 
         top1_matches = 0
         top10_overlap_total = 0.0

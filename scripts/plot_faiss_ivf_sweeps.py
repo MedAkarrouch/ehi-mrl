@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Plot Phase 3 FAISS IVF quality-efficiency sweeps."""
+"""Plot SBERT + FAISS-IVF quality-efficiency sweeps."""
 
 from __future__ import annotations
 
@@ -14,6 +14,9 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 
+
+EXACT_METHOD_LABEL = "SBERT + Exact Search"
+IVF_METHOD_LABEL = "SBERT + FAISS-IVF"
 
 DATASETS = {
     "nq320k": {
@@ -190,13 +193,13 @@ def save_metric_plot(
                 fontsize=7,
                 alpha=0.75,
             )
-    ax.axhline(exact_value, linestyle="--", color="black", linewidth=1.2, label="Phase 2 exact")
+    ax.axhline(exact_value, linestyle="--", color="black", linewidth=1.2, label=EXACT_METHOD_LABEL)
     ax.set_xscale(xscale)
     ax.set_xlabel("% documents visited")
     ax.set_ylabel(metric_axis_label(metric))
-    ax.set_title(f"{dataset_label}: {metric} vs % documents visited")
+    ax.set_title(f"{dataset_label}: {IVF_METHOD_LABEL} {metric} vs % documents visited")
     ax.set_ylim(bottom=0)
-    ax.legend(title="IVF lists")
+    ax.legend(title=f"{IVF_METHOD_LABEL} nlist")
     ax.grid(True, alpha=0.25)
     base = output_dir / f"{output_prefix}_{metric_slug(metric)}_vs_docsvisited"
     svg_path = base.with_suffix(".svg")

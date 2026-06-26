@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Offline checks for Phase 3 FAISS IVF configs."""
+"""Offline checks for SBERT + FAISS-IVF configs."""
 
 from __future__ import annotations
 
@@ -45,7 +45,7 @@ def main() -> None:
         assert config["primary_metrics"] == expected_metrics
         assert all(isinstance(value, int) and value > 0 for value in config["nlist_values"]), config["nlist_values"]
         assert all(isinstance(value, int) and value > 0 for value in config["nprobe_values"]), config["nprobe_values"]
-    print("Phase 3 FAISS config checks passed.")
+    print("SBERT + FAISS-IVF config checks passed.")
 
 
 if __name__ == "__main__":

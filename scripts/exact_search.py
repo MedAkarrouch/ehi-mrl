@@ -276,7 +276,7 @@ def main() -> int:
         repo_root = repo_root_from_script(__file__)
         config = load_config(resolve_path(repo_root, args.config))
         if str(config.get("similarity", "cosine")).lower() != "cosine":
-            raise RuntimeError("Phase 2 exact search only supports cosine similarity via normalized dot product.")
+            raise RuntimeError("SBERT + Exact Search only supports cosine similarity via normalized dot product.")
 
         split = str(config["split"])
         embedding_dir = resolve_path(repo_root, config["embedding_dir"])
